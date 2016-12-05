@@ -1,0 +1,8 @@
+[package]
+name = "blood-money"
+version = "0.1.0"
+authors = ["hyena <hyena@users.noreply.github.com>"]
+
+[dependencies]
+hyper = "*"
+rustc-serialize = "0.3"
