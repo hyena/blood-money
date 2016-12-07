@@ -1,14 +1,15 @@
-<!-- A World of Warcraft webapp that helps players determine the best value for their bloods of sargeras on their realm. -->
+A World of Warcraft webapp that helps players determine the best value for their bloods of sargeras on their realm.
+
+Status
+------
+Basic downloading of all realm auctions is implemented. It's
+slow, sadly, but it's a lot of data.
 
 Todo
 ----
-
-Code up the basic task of getting all price info
   - Read token from config (or commandline?)
-  - Get realm list
-  - Get address of auction data for every realm
-  - Get auction data for each realm
-Later we'll migrate this into its own thread.
+  - Process auction data.
+  - Move all network logic into a background thread.
 
 Fix up dependencies with real versions.
 
