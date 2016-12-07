@@ -1,4 +1,4 @@
-A World of Warcraft webapp that helps players determine the best value for their bloods of sargeras on their realm.
+<!-- A World of Warcraft webapp that helps players determine the best value for their bloods of sargeras on their realm. -->
 
 Todo
 ----
