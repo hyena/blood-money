@@ -10,7 +10,7 @@ Todo
   - Read token from config (or commandline?)
   - Process auction data.
   - Move all network logic into a background thread.
-
-Fix up dependencies with real versions.
+  - Move these println's into a real logging system.
+Fix up hyper dependencies with real versions.
 
 Move the token into a config.toml file.

@@ -80,7 +80,7 @@ fn main() {
                         .send() {
                             Ok(r) => res = r,
                             Err(e) => {
-                                println!("Failed to get auction data status for {}: {}. Retry {}.", &lead_realm, e, retry);
+                                println!("Failed to get auction status for {}: {}. Retry {}.", &lead_realm, e, retry);
                                 continue;
                             }
                         }
@@ -88,7 +88,13 @@ fn main() {
                         println!("Error downloading auction status for {}. Retry {}.", &lead_realm, retry);
                         continue;
                     }
-                    res.read_to_string(&mut s).unwrap();
+                    match res.read_to_string(&mut s) {
+                        Ok(_) => (),
+                        Err(e) => {
+                            println!("Failed to process auction status for {}: {}. Retry {}.", &lead_realm, e, retry);
+                            continue;
+                        }
+                    }
                     succeeded = true;
                 }
                 let mut auction_data_reply: AuctionDataReply = json::decode(&s).expect("Malformed json reply.");
@@ -101,6 +107,7 @@ fn main() {
                 s.clear();
                 while !succeeded {
                     retry += 1;
+                    tt.pass_through_or_block();  // Shouldn't be necessary because this isn't API linked, but be careful.
                     match client.get(&auction_data_pointer.url).send() {
                         Ok(r) => res = r,
                         Err(e) => {
@@ -112,7 +119,13 @@ fn main() {
                         println!("Error downloading data for {}. Retry {}.", &lead_realm, retry);
                         continue;
                     }
-                    res.read_to_string(&mut s).unwrap();
+                    match res.read_to_string(&mut s) {
+                        Ok(_) => (),
+                        Err(e) => {
+                            println!("Failed to process auction data for {}: {}. Retry {}.", &lead_realm, e, retry);
+                            continue;
+                        }
+                    }
                     succeeded = true;
                 }
                 println!("Finished processing {}", &lead_realm);
@@ -125,5 +138,5 @@ fn main() {
         scope.join_all();
     });
     let auction_pointers = pointer_lock.into_inner().unwrap();
-    println!("{:?}", auction_pointers);
+    println!("Done!");
 }
