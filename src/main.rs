@@ -12,11 +12,12 @@ use std::time::Duration;
 use hyper::client::{Client, Response};
 use scoped_threadpool::Pool;
 
-mod threadthrottler;
+mod thread_throttler;
 
 // All we care about for every realm is its "slug".
 #[derive(Debug, RustcDecodable)]
 struct RealmInfo {
+    name: String,
     slug: String,
     connected_realms: Vec<String>,
 }
@@ -40,7 +41,7 @@ struct AuctionDataReply {
 }
 
 fn main() {
-    let tt = threadthrottler::ThreadThrottler::new(100, Duration::new(1, 0));
+    let tt = thread_throttler::ThreadThrottler::new(100, Duration::new(1, 0));
     let token = match env::args().nth(1) {
         Some(token) => token,
         None => {
