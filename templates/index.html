@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Realm List{% endblock title %}
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+      .realm-list {
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .realm-list .realm {
+        flex: 1 0 25%;
+        box-sizing: border-box;
+        padding: 10px;
+      }
+    </style>
+{% endblock head %}
+{% block content %}
+<h1>Blood-Money Realm List</h1>
+<p>Select your realm from the listings below to view current
+  <a href="http://www.wowhead.com/npc=115264/illnea-bloodthorn">[blood of sargeras]</a> values.
+</p>
+<hr />
+<div class="realm-list">
+  {% for realm in realms %}
+    <div class="realm"><a href="{{realm.slug}}">{{realm.name}}</a></div>
+  {% endfor %}
+</div>
+{% endblock content %}

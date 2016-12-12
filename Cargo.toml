@@ -5,5 +5,10 @@ authors = ["hyena <hyena@users.noreply.github.com>"]
 
 [dependencies]
 hyper = "*"
-rustc-serialize = "0.3"
+iron = "*"
+router = "*"
+serde = "0.8"
+serde_derive = "0.8"
+serde_json = "0.8"  # just for the example, not required in general
 scoped_threadpool = "0.1.7"
+tera = "*"

@@ -71,7 +71,7 @@ fn main() {
     let token = match env::args().nth(1) {
         Some(token) => token,
         None => {
-            println!("Usage: bloodmoney <api token>");
+            println!("Usage: blood-money <api token>");
             return;
         }
     };

@@ -1,0 +1,49 @@
+<html>
+<head>
+    {% block head %}
+    <title>{% block title %}{% endblock title %} - Blood Money</title>
+    <style>
+        @import url("https://overpass-30e2.kxcdn.com/overpass.css");
+        body {
+            background-color: black;
+            font-family: 'Overpass',sans-serif;
+            height:100%;
+            padding: 20px;
+            color: #99d1ce;
+        }
+        a:link {
+          color: #26619c;
+        }
+        .monk-color {
+          color: #00FF96
+        }
+        #content {
+          font-size:1.4em;
+        }
+        #footer {
+          display: flex;
+          flex-flow: column;
+          justify-content: space-around;
+          align-items: center;
+        }
+        #logo {
+          width: 3em;
+          height: auto;
+          margin-left: 15px;
+        }
+    </style>
+    {% endblock head %}
+</head>
+<body>
+    <div id="content">{% block content %}{% endblock content %}</div>
+        <hr />
+        <div id="footer">
+            {% block footer %}
+            <div style="display: flex; align-items: center;">
+              <div>&copy; Copyright 2016 by  <a href="https://rodent.io">rodent.io</a></div> <img id="logo" src="https://rodent.io/images/white-squirrel.jpg">
+            </div>
+            <div>Direct complaints, questions, and suggestions to <span class="monk-color">Sqrl-EarthenRing</span> or on the <a href="https://github.com/hyena/blood-money">github project</a>.</div>
+            {% endblock footer %}
+        </div>
+</body>
+</html>

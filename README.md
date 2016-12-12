@@ -11,6 +11,13 @@ Todo
   - Process auction data.
   - Move all network logic into a background thread.
   - Move these println's into a real logging system.
-Fix up hyper dependencies with real versions.
+Fix up hyper and iron dependencies with real versions.
 
 Move the token into a config.toml file.
+
+Currently does not really respect changes in realm lists. Requires a restart to handle those changes.
+
+License
+-------
+
+Although I can't imagine someone else using this: MIT, of course.
