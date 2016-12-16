@@ -8,14 +8,15 @@ slow, sadly, but it's a lot of data.
 Todo
 ----
   - Read token from config (or commandline?)
-  - Process auction data.
   - Move all network logic into a background thread.
   - Move these println's into a real logging system.
-Fix up hyper and iron dependencies with real versions.
+  - Fix up hyper and iron dependencies with real versions.
+  - The way I'm doing lifetimes with my closures is probably a debacle. There's probably a more elegant way to
+    do this with lifetimes?
 
-Move the token into a config.toml file.
+Things that we might get to if this became more serious:
+  - Currently does not really respect changes in realm lists. Requires a restart to handle those changes.
 
-Currently does not really respect changes in realm lists. Requires a restart to handle those changes.
 
 License
 -------

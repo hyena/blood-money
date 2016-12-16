@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Prices for {{realm_name}}{% endblock title %}
+{% block head %}
+    {{ super() }}
+    <style>
+    .price-list {
+      display: flex;
+      flex-flow: column;
+    }
+    .price-row {
+      display: flex;
+      flex-flow: row;
+    }
+    </style>
+{% endblock head %}
+{% block content %}
+<h1>Best current prices for {{realm_name}}</h1>
+<hr />
+<div class="price-list">
+  {% for price_row in price_rows %}
+    <div class="price-row">
+      <div>
+        <img src="http://media.blizzard.com/wow/icons/56/{{price_row.icon}}.jpg">
+        {{price_row.name}} X {{price_row.quantity}}
+      </div>
+      <div>
+        {{price_row.gold}}g{{price_row.silver}}s{{price_row.copper}}c
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock content %}
