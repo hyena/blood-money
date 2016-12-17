@@ -67,7 +67,7 @@ struct PriceRow {
     name: String,
     quantity: u64,
     icon: String,
-    value: u64,
+    value_ratio: u32,
     gold: u64,
     silver: u64,
     copper: u64,
@@ -123,16 +123,18 @@ fn main() {
                 let mut context = Context::new();
                 let realm_prices = realm_prices_lock.read().unwrap();
                 // Build up a list of entries.
+                let mut value_ratio = 102;
                 let price_rows: Vec<PriceRow> = realm_prices.auction_values.iter().map(|&(id, value)| {
                     let item_info = item_id_map.get(&id).unwrap();
                     let gold = value / (10_000);
                     let silver = (value - gold * 10_000) / 100;
                     let copper = value - gold * 10_000 - silver * 100;
+                    value_ratio -= 2;
                     PriceRow {
                         name: item_info.name.clone(),
                         quantity: item_info.quantity,
                         icon: item_icons.get(&id).unwrap().clone(),
-                        value: value,
+                        value_ratio: value_ratio,
                         gold: gold,
                         silver: silver,
                         copper: copper,
@@ -140,6 +142,8 @@ fn main() {
                 }).collect();
                 context.add("realm_name", &realms.iter().find(|&realm_info| &realm_info.slug == realm).unwrap().name);
                 context.add("price_rows", &price_rows);
+                // TODO: Change this to something more human readable.
+                context.add("last_update", &realm_prices.last_update);
                 Ok(Response::with((ContentType::html().0, status::Ok, tera.render("prices.html", context).unwrap())))
             } else {
                 return Ok(Response::with(status::NotFound));

@@ -3,7 +3,44 @@
 {% block head %}
     {{ super() }}
     <style>
-    .price-list {
+    .price-table {
+      display: flex;
+    }
+    .item-column {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-around;
+    }
+    .vendor-item-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      white-space: nowrap;
+      margin-bottom: 15px;
+      margin-right: 10px;
+    }
+    .vendor-item > img {
+      padding-left: 15px
+    }
+    .value-column {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      width: 100%;  /* Take up the rest of the row */
+    }
+    .item-value-cell {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+    .value-bar {
+      height: 45px;
+      border-radius: 5px;
+      background-color: #66023C;
+    }
+    /*.price-list {
       display: flex;
       flex-flow: column;
     }
@@ -11,22 +48,33 @@
       display: flex;
       flex-flow: row;
     }
+    .vendor-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }*/
     </style>
 {% endblock head %}
 {% block content %}
 <h1>Best current prices for {{realm_name}}</h1>
+Best investment is currently {{price_rows.0.name}}. Last updated at {{last_update}}.
 <hr />
-<div class="price-list">
-  {% for price_row in price_rows %}
-    <div class="price-row">
-      <div>
-        <img src="http://media.blizzard.com/wow/icons/56/{{price_row.icon}}.jpg">
-        {{price_row.name}} X {{price_row.quantity}}
-      </div>
-      <div>
-        {{price_row.gold}}g{{price_row.silver}}s{{price_row.copper}}c
-      </div>
+<div class="price-table">
+  <div class="item-column">
+    {% for price_row in price_rows %}
+    <div class="vendor-item-cell">
+      <img src="http://media.blizzard.com/wow/icons/56/{{price_row.icon}}.jpg">
+      {{price_row.name}} X {{price_row.quantity}}
     </div>
-  {% endfor %}
+    {% endfor %}
+  </div>
+  <div class="value-column">
+    {% for price_row in price_rows %}
+    <div class="item-value-cell">
+      <div class="value-bar" style="width: {{price_row.value_ratio}}%;"></div>
+      {{price_row.gold}}g{{price_row.silver}}s{{price_row.copper}}c
+    </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock content %}
