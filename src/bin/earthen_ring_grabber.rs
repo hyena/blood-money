@@ -34,7 +34,7 @@ struct AuctionDataPointer {
 
 #[derive(Debug, RustcDecodable)]
 struct AuctionDataReply {
-    files: Vec<AuctionDataPointer>,
+    files: Vec<AuctionDataPointer>, // Will always be 1 element.
 }
 
 /// The fields we care about in blizzard's auction reply.
