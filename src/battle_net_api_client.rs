@@ -6,16 +6,17 @@
 extern crate hyper;
 extern crate serde_json;
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::io::Read;
 use std::time::Duration;
 
 use hyper::client::{Client, Response};
+use rustc_serialize::{Decodable, json};
 use serde::de::Deserialize;
 use thread_throttler::ThreadThrottler;
 
 /// The content we care about in the realm status response.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, RustcDecodable)]
 pub struct RealmInfo {
     pub name: String,
     pub slug: String,
@@ -23,7 +24,7 @@ pub struct RealmInfo {
 }
 
 /// Content we care about in an item info response.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, RustcDecodable)]
 pub struct ItemInfo {
     pub id: u64,
     pub name: String,
@@ -31,27 +32,27 @@ pub struct ItemInfo {
 }
 
 /// Represents the reply from blizzard's auction data urls.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, RustcDecodable)]
 struct AuctionListingsReply {
-    realms: Vec<RealmInfo>,
+    realms: Vec<BTreeMap<String, String>>,  // Can't re-use RealmInfo because no connected_realms.
     auctions: Vec<AuctionListing>,
 }
 
 /// Represents the JSON reply from the auction data status endpoint.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, RustcDecodable)]
 #[allow(non_snake_case)]
 struct AuctionDataPointer {
     url: String,
     lastModified: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, RustcDecodable)]
 struct AuctionDataReply {
     files: Vec<AuctionDataPointer>, // Will always be 1 element.
 }
 
 /// The fields we care about in blizzard's auction reply.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, RustcDecodable)]
 pub struct AuctionListing {
     pub item: u64,
     pub buyout: u64,
@@ -78,7 +79,7 @@ impl BattleNetApiClient {
     /// `task` will be used for error messages.
     /// TODO: Really this should try to decode the json as well and be type
     /// inferred from context.
-    fn make_blizzard_api_call<T: Deserialize>(&self, url: &str, task: &str) -> T {
+    fn make_blizzard_api_call<T: Decodable>(&self, url: &str, task: &str) -> T {
         let mut s = String::new();
         let mut retries = 0;
 
@@ -107,7 +108,12 @@ impl BattleNetApiClient {
                     continue;
                 },
             }
-            match serde_json::from_str(&s) {
+            // TODO: Fix this file to use serde instead.
+            //Sometimes the auction listings contain invalid unicode. Strip that:
+            // s = String::from_utf8_lossy(s.as_bytes()).into_owned();
+            // But even then, we're getting json errors. Until we solve that, use
+            // rustc_serialize.
+            match json::decode(&s) {
                 Ok(obj) => return obj,
                 Err(e) => {
                     println!("Failed to decode json for {}: {}. Retry {}.", task, e, retries);
@@ -125,7 +131,7 @@ impl BattleNetApiClient {
 
     /// Downloads the auction listings for the specified realm, or None if the listings haven't
     /// been updated since `cutoff`.
-    pub fn get_auction_listings(&self, realm_slug: &str, cutoff: u64) -> Option<Vec<AuctionListing>> {
+    pub fn get_auction_listings(&self, realm_slug: &str, cutoff: u64) -> Option<(u64, Vec<AuctionListing>)> {
         let mut auction_data_reply: AuctionDataReply =
             self.make_blizzard_api_call(
                 &format!("https://us.api.battle.net/wow/auction/data/{}?locale=en_US&apikey={}", realm_slug, self.token),
@@ -135,14 +141,14 @@ impl BattleNetApiClient {
         if auction_data_pointer.lastModified <= cutoff {
             return None
         }
-        let mut auction_listings_data: AuctionListingsReply =
+        let auction_listings_data: AuctionListingsReply =
             self.make_blizzard_api_call(&auction_data_pointer.url, &format!("auction listings for {}", realm_slug));
-        Some(auction_listings_data.auctions)
+        Some((auction_data_pointer.lastModified, auction_listings_data.auctions))
     }
 
-    /// Helpler function to process a vec of RealmInfo's into sets of connected realms.
-    /// Connected realms share an auction house.
-    pub fn process_realm_sets(realm_infos: &Vec<RealmInfo>) -> Vec<Vec<String>> {
+    /// Helpler function to process a vec of RealmInfo's into vec's of slugs for
+    /// connected realms. Connected realms share an auction house.
+    pub fn process_connected_realms(realm_infos: &Vec<RealmInfo>) -> Vec<Vec<String>> {
         let mut realm_sets: Vec<Vec<String>> = realm_infos.into_iter().map(|r|
             r.connected_realms.clone()
         ).collect();

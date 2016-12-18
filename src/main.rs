@@ -3,6 +3,7 @@
 extern crate hyper;
 extern crate iron;
 extern crate router;
+extern crate rustc_serialize;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -12,39 +13,20 @@ extern crate tera;
 
 use std::collections::{BTreeMap, HashMap};
 use std::env;
-use std::rc::Rc;
 use std::sync::{Arc, RwLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use iron::headers::ContentType;
 use iron::prelude::*;
 use iron::status;
 use router::Router;
-use hyper::client::{Client, Response as HyperResponse};
 use scoped_threadpool::Pool;
 use tera::{Context, Tera};
 
 pub mod battle_net_api_client;
 pub mod thread_throttler;
 
-use battle_net_api_client::BattleNetApiClient;
-
-// Contains all the price info for a realm.
-struct RealmAuctionInfo {
-    last_update: u64,  // The last time we got this info, as reported by the Blizzard API.
-    price_points: BTreeMap<u64, Vec<(u32, u64)>>,  // Map of item ids to a vector of pairs of item quantity, buyout price.
-}
-
-// Represents the JSON reply from the auction data status endpoint.
-#[derive(Debug)]
-struct AuctionDataPointer {
-    url: String,
-    lastModified: u64,
-}
-
-#[derive(Debug)]
-struct AuctionDataReply {
-    files: Vec<AuctionDataPointer>,
-}
+use battle_net_api_client::{AuctionListing, BattleNetApiClient};
 
 /// Represents a single option available for sale from the blood vendor.
 #[derive(Debug, Deserialize)]
@@ -54,11 +36,18 @@ struct BloodVendorItem {
     id: u64,
 }
 
+/// Value of an item on a realm.
+#[derive(Debug)]
+struct ItemValue {
+    id: u64,
+    value: u64,
+}
+
 /// The calculated values for items on a particular realm.
 #[derive(Debug)]
 struct CurrentRealmValues {
     last_update: u64,  // The last time we got this info, as reported by the Blizzard API.
-    auction_values: Vec<(u64, u64)>,  // Sorted vec of (item id, value)
+    auction_values: Arc<Vec<ItemValue>>,  // Should be sorted by value.
 }
 
 /// All the data in a single row in our price list for a realm.
@@ -67,10 +56,54 @@ struct PriceRow {
     name: String,
     quantity: u64,
     icon: String,
-    value_ratio: u32,
+    value_ratio: u64,
     gold: u64,
     silver: u64,
     copper: u64,
+}
+
+/// Number of threads to use when fetching auction house results.
+const NUM_AUCTION_DATA_THREADS: u32 = 5;
+
+/// Number of seconds to wait between fetching new auction results.
+const RESULT_FETCH_PERIOD: i32 = 60 * 15;  // 15 minutes.
+
+/// Given a vec of auction listings for a realm and a map of the items we care about,
+/// returns a vec of (item_id, value) sorted by decreasing value, where value is
+/// based on the 5th percentile buyout price.
+fn calculate_auction_values(listings: &Vec<AuctionListing>, items: &HashMap<u64, BloodVendorItem>) -> Vec<ItemValue> {
+    // Calculate 5th percentiles for the items we care about.
+    let mut price_points: BTreeMap<u64, Vec<(u64, u64)>> = BTreeMap::new();
+    for listing in listings {
+        if items.contains_key(&listing.item) && listing.buyout > 0 {
+            price_points.entry(listing.item).or_insert(Vec::new()).push((listing.quantity, listing.buyout / listing.quantity));
+        }
+    }
+    for quantities_and_buyouts in price_points.values_mut() {
+        quantities_and_buyouts.sort_by_key(|a| a.1);
+    }
+    let total_item_quantities: BTreeMap<u64, u64> =
+        price_points.iter().map(|(k, v)| {
+            (*k, v.iter().fold(0, |sum, quantity_and_buyout| sum + quantity_and_buyout.0))
+        }).collect();
+    let fifth_percentile_price_points: BTreeMap<u64, u64> =
+        price_points.iter().map(|(item_id, ref item_listings)| {
+            let fifth_percentile_quantity = total_item_quantities.get(item_id).unwrap() / 20;
+            let mut running_sum: u64 = 0;
+            let fifth_percentile_listing = item_listings.iter().find(|&&(quantity, _)| {
+                running_sum += quantity;
+                running_sum >= fifth_percentile_quantity
+            }).unwrap();
+            (*item_id, fifth_percentile_listing.1)
+        }).collect();
+    let mut item_values: Vec<ItemValue> = items.values().map(|item|
+        ItemValue {
+            id: item.id,
+            value: fifth_percentile_price_points.get(&item.id).unwrap_or(&0u64) * item.quantity,
+        }
+    ).collect();
+    item_values.sort_by_key(|item_value| !item_value.value);
+    item_values
 }
 
 fn main() {
@@ -81,7 +114,7 @@ fn main() {
             return;
         }
     };
-    let client = BattleNetApiClient::new(&token);
+    let client = Arc::new(BattleNetApiClient::new(&token));
 
     // Process our item options and grab their icon names.
     let items: Vec<BloodVendorItem> = serde_json::from_str(include_str!("../catalog/items.json"))
@@ -92,13 +125,12 @@ fn main() {
     // Get the list of realms and create an empty price map so we can render pages while
     // waiting for the auction results to be retrieved.
     let realms = Arc::new(client.get_realms());
+    let connected_realms = BattleNetApiClient::process_connected_realms(&realms);
     let price_map: Arc<BTreeMap<String, RwLock<CurrentRealmValues>>> =
-        Arc::new(BattleNetApiClient::process_realm_sets(&realms).iter().flat_map(|realm_set|
-            realm_set.iter().map(|realm_name| (realm_name.clone(), RwLock::new(CurrentRealmValues {
-                last_update: 0,
-                auction_values: item_id_map.keys().map(|id| (*id, 0u64)).collect(),
-            }))
-        )).collect());
+        Arc::new(realms.iter().map(|realm| (realm.slug.clone(), RwLock::new(CurrentRealmValues {
+            last_update: 0,
+            auction_values: Arc::new(item_id_map.keys().map(|id| ItemValue{id: *id, value: 0u64}).collect()),
+        }))).collect());
 
     // Set up our web-app.
     let tera = Arc::new(Tera::new("templates/**/*"));
@@ -123,13 +155,16 @@ fn main() {
                 let mut context = Context::new();
                 let realm_prices = realm_prices_lock.read().unwrap();
                 // Build up a list of entries.
-                let mut value_ratio = 102;
-                let price_rows: Vec<PriceRow> = realm_prices.auction_values.iter().map(|&(id, value)| {
+                let highest_value = realm_prices.auction_values.get(0).unwrap().value;
+                let price_rows: Vec<PriceRow> = realm_prices.auction_values.iter().map(|&ItemValue{id, value}| {
                     let item_info = item_id_map.get(&id).unwrap();
                     let gold = value / (10_000);
                     let silver = (value - gold * 10_000) / 100;
                     let copper = value - gold * 10_000 - silver * 100;
-                    value_ratio -= 2;
+                    let value_ratio = match highest_value {
+                        0u64 => 0u64,
+                        _ => value*100/highest_value,  // Percentile!
+                    };
                     PriceRow {
                         name: item_info.name.clone(),
                         quantity: item_info.quantity,
@@ -143,92 +178,57 @@ fn main() {
                 context.add("realm_name", &realms.iter().find(|&realm_info| &realm_info.slug == realm).unwrap().name);
                 context.add("price_rows", &price_rows);
                 // TODO: Change this to something more human readable.
-                context.add("last_update", &realm_prices.last_update);
+                if realm_prices.last_update == 0 {
+                    context.add("update_age", &-1);
+                } else {
+                    context.add("update_age",
+                        &(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - realm_prices.last_update / 1000));
+                }
                 Ok(Response::with((ContentType::html().0, status::Ok, tera.render("prices.html", context).unwrap())))
             } else {
                 return Ok(Response::with(status::NotFound));
             }
         }, "realm-prices");
     }
-    //router.get("/:realm", realm_handler, "realm");
+    let http_result = Iron::new(router).http("localhost:3000");
     println!("Ready for web traffic.");
-    Iron::new(router).http("localhost:3000").unwrap();
-    // // Get all their auction data in parallel.
-    // let pointer_lock = Mutex::new(BTreeMap::new());
-    //
-    // let mut pool = Pool::new(10);
-    // pool.scoped(|scope| {
-    //     for (lead_realm, realm_list) in realm_sets {
-    //         scope.execute(|| {
-    //             let mut succeeded = false;
-    //             let mut retry = 0;
-    //             let mut s = String::new();
-    //             let mut res: Response;
-    //
-    //             while !succeeded {
-    //                 retry += 1;
-    //                 tt.pass_through_or_block();
-    //                 match client.get(&format!("https://us.api.battle.net/wow/auction/data/{}?locale=en_US&apikey={}", &lead_realm, &token))
-    //                     .send() {
-    //                         Ok(r) => res = r,
-    //                         Err(e) => {
-    //                             println!("Failed to get auction status for {}: {}. Retry {}.", &lead_realm, e, retry);
-    //                             continue;
-    //                         }
-    //                     }
-    //                 if res.status != hyper::Ok {
-    //                     println!("Error downloading auction status for {}. Retry {}.", &lead_realm, retry);
-    //                     continue;
-    //                 }
-    //                 match res.read_to_string(&mut s) {
-    //                     Ok(_) => (),
-    //                     Err(e) => {
-    //                         println!("Failed to process auction status for {}: {}. Retry {}.", &lead_realm, e, retry);
-    //                         continue;
-    //                     }
-    //                 }
-    //                 succeeded = true;
-    //             }
-    //             let mut auction_data_reply: AuctionDataReply = json::decode(&s).expect("Malformed json reply.");
-    //             let auction_data_pointer = auction_data_reply.files.pop().unwrap();
-    //
-    //             // Download the auction data but don't do anything with it for now.
-    //             println!("Opening {} for {}", &auction_data_pointer.url, &lead_realm);
-    //             succeeded = false;
-    //             retry = 0;
-    //             s.clear();
-    //             while !succeeded {
-    //                 retry += 1;
-    //                 tt.pass_through_or_block();  // Shouldn't be necessary because this isn't API linked, but be careful.
-    //                 match client.get(&auction_data_pointer.url).send() {
-    //                     Ok(r) => res = r,
-    //                     Err(e) => {
-    //                         println!("Error downloading data for {}: {}. Retry {}.", &lead_realm, e, retry);
-    //                         continue;
-    //                     }
-    //                 }
-    //                 if res.status != hyper::Ok {
-    //                     println!("Error downloading data for {}. Retry {}.", &lead_realm, retry);
-    //                     continue;
-    //                 }
-    //                 match res.read_to_string(&mut s) {
-    //                     Ok(_) => (),
-    //                     Err(e) => {
-    //                         println!("Failed to process auction data for {}: {}. Retry {}.", &lead_realm, e, retry);
-    //                         continue;
-    //                     }
-    //                 }
-    //                 succeeded = true;
-    //             }
-    //             println!("Finished processing {}", &lead_realm);
-    //             {
-    //                 let mut pointers = pointer_lock.lock().unwrap();
-    //                 pointers.insert(lead_realm, s);
-    //             }
-    //         })
-    //     }
-    //     scope.join_all();
-    // });
-    // let auction_pointers = pointer_lock.into_inner().unwrap();
-    // println!("Done!");
+
+    // Now that the webserver is up, periodically fetch
+    // new auction house data.
+    let mut pool = Pool::new(NUM_AUCTION_DATA_THREADS);
+    pool.scoped(|scope| {
+        for realm_list in &connected_realms {
+            // We have to move realm_list into the closure.
+            // Clone other values.
+            let client = client.clone();
+            let price_map = price_map.clone();
+            let item_id_map = item_id_map.clone();
+            scope.execute(move || {
+                let lead_realm = realm_list.get(0).unwrap();
+                let update_time: u64;
+                let auction_listings: Vec<AuctionListing>;
+                println!("Downloading {}", lead_realm);
+                {
+                    let current_realm_values =
+                        price_map.get(lead_realm).unwrap().read().unwrap();
+                    match client.get_auction_listings(lead_realm, current_realm_values.last_update) {
+                        Some((ts, al)) => {
+                            update_time = ts;
+                            auction_listings = al;
+                        },
+                        None => return,
+                    }
+                }
+                let auction_values = Arc::new(calculate_auction_values(&auction_listings, &item_id_map));
+                for realm in realm_list {
+                    println!("Updating {}", realm);
+                    let mut current_realm_values =
+                        price_map.get(realm).unwrap().write().unwrap();
+                    current_realm_values.auction_values = auction_values.clone();
+                    current_realm_values.last_update = update_time;
+                }
+            })
+        }
+        scope.join_all();
+    });
 }

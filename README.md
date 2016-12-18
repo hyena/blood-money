@@ -1,9 +1,12 @@
 A World of Warcraft webapp that helps players determine the best value for their bloods of sargeras on their realm.
 
-Status
-------
-Basic downloading of all realm auctions is implemented. It's
-slow, sadly, but it's a lot of data.
+Quickstart
+----------
+  1. Compile blood-money
+  2. Make an account on https://dev.battle.net/ and generate an
+     API key.
+  3. Run `blood-money <api key>`
+  4. Look at http://localhost:3000
 
 Todo
 ----
@@ -11,11 +14,13 @@ Todo
   - Implement refresh in main thread
   - Move these println's into a real logging system.
   - Fix up hyper and iron dependencies with real versions.
-  - Provide a better message when initial values aren't yet
-    available.
   - Remove earthen-ring-grabber.rs when the main
     implementation is complete.
-
+  - I switched the deserialization library from `serde` back to
+    `rustc_serialize` because `serde` was dying on Blizzard's
+    unicode in auction owner names. `utf8_lossy()` conversion
+    doesn't seem to strip enough. Until I fix this, stick with
+    `rustc_serialize` since it seems more permissive.
 Things that we might get to if this became more serious:
   - Currently does not respect changes in realm lists.
     Requires a restart to handle those changes.

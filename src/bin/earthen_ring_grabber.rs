@@ -148,7 +148,7 @@ fn main() {
 
     for listing in &auction_listings_data.auctions {
         if item_ids.contains_key(&listing.item) && listing.buyout > 0 {
-            realm_auction_info.price_points.entry(listing.item).or_insert(Vec::new()).push((listing.quantity, listing.buyout));
+            realm_auction_info.price_points.entry(listing.item).or_insert(Vec::new()).push((listing.quantity, listing.buyout / listing.quantity));
         }
     }
 
@@ -169,7 +169,7 @@ fn main() {
                 }
                 running_sum >= fifth_percentile_quantity
             }).unwrap();
-            (*item_id, fifth_percentile_listing.1 / fifth_percentile_listing.0)
+            (*item_id, fifth_percentile_listing.1)
         }).collect();
     for (item_id, item) in &item_ids {
         println!("There are {} {} on the auction house and their 5th percentile buyout is {}.",

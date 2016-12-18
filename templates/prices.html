@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Prices for {{realm_name}}{% endblock title %}
+{% block title %}{{realm_name}} blood values{% endblock title %}
 {% block head %}
     {{ super() }}
     <style>
@@ -46,8 +46,12 @@
     </style>
 {% endblock head %}
 {% block content %}
-<h1>Best current prices for {{realm_name}}</h1>
-Best investment is currently {{price_rows.0.name}}. Last updated at {{last_update}}.
+<h1>Current values for {{realm_name}}</h1>
+{% if update_age == -1 %}
+<h2>Still waiting on results for this realm.</h2>
+{% else %}
+<h2>Best investment is currently {{price_rows.0.name}}</h2> Last updated {{update_age}} seconds ago.
+{% endif %}
 <hr />
 <div class="price-table">
   <div class="item-column">
