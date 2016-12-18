@@ -125,7 +125,7 @@ impl BattleNetApiClient {
     /// Downloads a list of realms from the Blizzard API.
     pub fn get_realms(&self) -> Vec<RealmInfo> {
         let mut realm_data: BTreeMap<String, Vec<RealmInfo>> =
-            self.make_blizzard_api_call(&format!("https://us.api.battle.net/wow/realm/status?locale=en_US&apikey={}", self.token), "realm status");
+            self.make_blizzard_api_call(&format!("https://eu.api.battle.net/wow/realm/status?locale=en_GB&apikey={}", self.token), "realm status");
         realm_data.remove("realms").expect("Malformed realm response.")
     }
 
@@ -134,7 +134,7 @@ impl BattleNetApiClient {
     pub fn get_auction_listings(&self, realm_slug: &str, cutoff: u64) -> Option<(u64, Vec<AuctionListing>)> {
         let mut auction_data_reply: AuctionDataReply =
             self.make_blizzard_api_call(
-                &format!("https://us.api.battle.net/wow/auction/data/{}?locale=en_US&apikey={}", realm_slug, self.token),
+                &format!("https://eu.api.battle.net/wow/auction/data/{}?locale=en_GB&apikey={}", realm_slug, self.token),
                 &format!("auction data for {}", realm_slug)
             );
         let auction_data_pointer = auction_data_reply.files.pop().unwrap();
@@ -161,6 +161,6 @@ impl BattleNetApiClient {
     }
 
     pub fn get_item_info(&self, id: u64) -> ItemInfo {
-        self.make_blizzard_api_call::<ItemInfo>(&format!("https://us.api.battle.net/wow/item/{}?locale=en_US&apikey={}", id, self.token), "item info")
+        self.make_blizzard_api_call::<ItemInfo>(&format!("https://eu.api.battle.net/wow/item/{}?locale=en_GB&apikey={}", id, self.token), "item info")
     }
 }

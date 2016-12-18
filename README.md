@@ -4,12 +4,13 @@ Quickstart
 ----------
   1. Compile blood-money
   2. Make an account on https://dev.battle.net/ and generate an
-     API key.
+     API key
   3. Run `blood-money <api key>`
   4. Look at http://localhost:3000
 
 Todo
 ----
+  - eu support is presently a hack and a separate branch. Fix this.
   - Read token from config (or stick with commandline?)
   - Implement refresh in main thread
   - Move these println's into a real logging system.

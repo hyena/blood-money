@@ -139,7 +139,7 @@ fn main() {
     {
         let realms = realms.clone();
         let tera = tera.clone();
-        router.get("/blood-money", move |_: &mut Request| {
+        router.get("/blood-money-eu", move |_: &mut Request| {
             let mut context = Context::new();
             context.add("realms", &realms);
             Ok(Response::with((ContentType::html().0, status::Ok, tera.render("index.html", context).unwrap())))
@@ -150,7 +150,7 @@ fn main() {
         let item_id_map = item_id_map.clone();
         let realms = realms.clone();
         let tera = tera.clone();
-        router.get("/blood-money/:realm", move |req : &mut Request| {
+        router.get("/blood-money-eu/:realm", move |req : &mut Request| {
             let realm = req.extensions.get::<Router>().unwrap().find("realm").unwrap();
             if let Some(realm_prices_lock) = price_map.get(realm) {
                 let mut context = Context::new();
@@ -191,7 +191,7 @@ fn main() {
             }
         }, "realm-prices");
     }
-    let http_result = Iron::new(router).http("localhost:3000");
+    let http_result = Iron::new(router).http("localhost:3001");
     println!("Ready for web traffic.");
 
     // Now that the webserver is up, periodically fetch
