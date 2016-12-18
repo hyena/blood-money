@@ -21,6 +21,10 @@ Todo
     unicode in auction owner names. `utf8_lossy()` conversion
     doesn't seem to strip enough. Until I fix this, stick with
     `rustc_serialize` since it seems more permissive.
+  - The threading model is presently fairly serial and could be
+    improved such that it was hurt less by stragglers or one
+    buggy realm.
+
 Things that we might get to if this became more serious:
   - Currently does not respect changes in realm lists.
     Requires a restart to handle those changes.
