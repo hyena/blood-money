@@ -14,7 +14,8 @@ extern crate tera;
 use std::collections::{BTreeMap, HashMap};
 use std::env;
 use std::sync::{Arc, RwLock};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::thread::sleep;
+use std::time::{Instant, Duration, SystemTime, UNIX_EPOCH};
 
 use iron::headers::ContentType;
 use iron::prelude::*;
@@ -66,7 +67,7 @@ struct PriceRow {
 const NUM_AUCTION_DATA_THREADS: u32 = 5;
 
 /// Number of seconds to wait between fetching new auction results.
-const RESULT_FETCH_PERIOD: i32 = 60 * 15;  // 15 minutes.
+const RESULT_FETCH_PERIOD: u64 = 60 * 30;
 
 /// Given a vec of auction listings for a realm and a map of the items we care about,
 /// returns a vec of (item_id, value) sorted by decreasing value, where value is
@@ -196,39 +197,50 @@ fn main() {
     // Now that the webserver is up, periodically fetch
     // new auction house data.
     let mut pool = Pool::new(NUM_AUCTION_DATA_THREADS);
-    pool.scoped(|scope| {
-        for realm_list in &connected_realms {
-            // We have to move realm_list into the closure.
-            // Clone other values.
-            let client = client.clone();
-            let price_map = price_map.clone();
-            let item_id_map = item_id_map.clone();
-            scope.execute(move || {
-                let lead_realm = realm_list.get(0).unwrap();
-                let update_time: u64;
-                let auction_listings: Vec<AuctionListing>;
-                println!("Downloading {}", lead_realm);
-                {
-                    let current_realm_values =
-                        price_map.get(lead_realm).unwrap().read().unwrap();
-                    match client.get_auction_listings(lead_realm, current_realm_values.last_update) {
-                        Some((ts, al)) => {
-                            update_time = ts;
-                            auction_listings = al;
-                        },
-                        None => return,
+    loop {
+        let download_start = Instant::now();
+        let next_download_time = download_start + Duration::from_secs(RESULT_FETCH_PERIOD);
+        println!("Starting download of auction data.");
+        pool.scoped(|scope| {
+            for realm_list in &connected_realms {
+                // We have to move realm_list into the closure.
+                // Clone other values.
+                let client = client.clone();
+                let price_map = price_map.clone();
+                let item_id_map = item_id_map.clone();
+                scope.execute(move || {
+                    let lead_realm = realm_list.get(0).unwrap();
+                    let update_time: u64;
+                    let auction_listings: Vec<AuctionListing>;
+                    println!("Downloading {}", lead_realm);
+                    {
+                        let current_realm_values =
+                            price_map.get(lead_realm).unwrap().read().unwrap();
+                        match client.get_auction_listings(lead_realm, current_realm_values.last_update) {
+                            Some((ts, al)) => {
+                                update_time = ts;
+                                auction_listings = al;
+                            },
+                            None => return,
+                        }
                     }
-                }
-                let auction_values = Arc::new(calculate_auction_values(&auction_listings, &item_id_map));
-                for realm in realm_list {
-                    println!("Updating {}", realm);
-                    let mut current_realm_values =
-                        price_map.get(realm).unwrap().write().unwrap();
-                    current_realm_values.auction_values = auction_values.clone();
-                    current_realm_values.last_update = update_time;
-                }
-            })
+                    let auction_values = Arc::new(calculate_auction_values(&auction_listings, &item_id_map));
+                    for realm in realm_list {
+                        println!("Updating {}", realm);
+                        let mut current_realm_values =
+                            price_map.get(realm).unwrap().write().unwrap();
+                        current_realm_values.auction_values = auction_values.clone();
+                        current_realm_values.last_update = update_time;
+                    }
+                })
+            }
+            scope.join_all();
+        });
+        let download_end_time = Instant::now();
+        println!("Downloading all realms took {} seconds.", download_end_time.duration_since(download_start).as_secs());
+        if download_end_time < next_download_time {
+            println!("Sleeping for {}", next_download_time.duration_since(download_end_time).as_secs());
+            sleep(next_download_time.duration_since(download_end_time));
         }
-        scope.join_all();
-    });
+    }
 }
