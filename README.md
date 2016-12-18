@@ -16,6 +16,8 @@ Todo
   - Fix up hyper and iron dependencies with real versions.
   - Remove earthen-ring-grabber.rs when the main
     implementation is complete.
+  - Save data between runs and use it when bringing the service
+    back up.
   - I switched the deserialization library from `serde` back to
     `rustc_serialize` because `serde` was dying on Blizzard's
     unicode in auction owner names. `utf8_lossy()` conversion
