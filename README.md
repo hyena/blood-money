@@ -7,18 +7,19 @@ slow, sadly, but it's a lot of data.
 
 Todo
 ----
-  - Read token from config (or commandline?)
-  - Move all network logic into a background thread.
+  - Read token from config (or stick with commandline?)
+  - Implement refresh in main thread
   - Move these println's into a real logging system.
   - Fix up hyper and iron dependencies with real versions.
-  - The way I'm doing lifetimes with my closures is probably a debacle. There's probably a more elegant way to
-    do this with lifetimes?
+  - Provide a better message when initial values aren't yet
+    available.
+  - Remove earthen-ring-grabber.rs when the main
+    implementation is complete.
 
 Things that we might get to if this became more serious:
-  - Currently does not really respect changes in realm lists. Requires a restart to handle those changes.
-
+  - Currently does not respect changes in realm lists.
+    Requires a restart to handle those changes.
 
 License
 -------
-
 Although I can't imagine someone else using this: MIT, of course.
