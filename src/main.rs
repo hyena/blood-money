@@ -2,6 +2,7 @@
 
 extern crate hyper;
 extern crate iron;
+extern crate regex;
 extern crate router;
 extern crate rustc_serialize;
 extern crate serde;
@@ -116,7 +117,6 @@ fn main() {
         }
     };
     let client = Arc::new(BattleNetApiClient::new(&token));
-
     // Process our item options and grab their icon names.
     let items: Vec<BloodVendorItem> = serde_json::from_str(include_str!("../catalog/items.json"))
         .expect("Error reading items.");

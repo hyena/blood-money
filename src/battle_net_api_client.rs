@@ -11,6 +11,7 @@ use std::io::Read;
 use std::time::Duration;
 
 use hyper::client::{Client, Response};
+use regex::Regex;
 use rustc_serialize::{Decodable, json};
 use serde::de::Deserialize;
 use thread_throttler::ThreadThrottler;
@@ -113,6 +114,13 @@ impl BattleNetApiClient {
             // s = String::from_utf8_lossy(s.as_bytes()).into_owned();
             // But even then, we're getting json errors. Until we solve that, use
             // rustc_serialize.
+            // TODO: This is a hack replacing the contents of the 'owner' field with an
+            // underscore. This is because blizzard often times put garbage in there. Improve this
+            // situation slightly by removing the regex from the loop (we shouldn't be compiling
+            // it in here anyway, and restructing the function to return a string. The string can
+            // be processed in individual api calls.
+            let re = Regex::new("\"owner\":\"([^\"]+?)\"").unwrap();
+            let s = re.replace_all(&s, "\"owner\":\"_\"");
             match json::decode(&s) {
                 Ok(obj) => return obj,
                 Err(e) => {
