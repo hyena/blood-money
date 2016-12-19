@@ -77,8 +77,8 @@ impl BattleNetApiClient {
     /// Try to retrieve something from the Blizzard API. Will retry indefinitely.
     /// Returns the body as a String.
     /// `task` will be used for error messages.
-    /// TODO: Really this should try to decode the json as well and be type
-    /// inferred from context.
+    /// TODO: Add an option to strip non-ascii entirely? i.e. If `zealous_clean` is true,
+    /// then extra effort will be made to strip non-ascii characters from the json before decoding it.
     fn make_blizzard_api_call<T: Decodable>(&self, url: &str, task: &str) -> T {
         let mut s = String::new();
         let mut retries = 0;
@@ -113,6 +113,7 @@ impl BattleNetApiClient {
             // s = String::from_utf8_lossy(s.as_bytes()).into_owned();
             // But even then, we're getting json errors. Until we solve that, use
             // rustc_serialize.
+            s = String::from_utf8_lossy(s.as_bytes()).into_owned();
             match json::decode(&s) {
                 Ok(obj) => return obj,
                 Err(e) => {
