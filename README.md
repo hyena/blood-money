@@ -12,7 +12,6 @@ Todo
 ----
   - eu support is presently a hack and a separate branch. Fix this.
   - Read token from config (or stick with commandline?)
-  - Implement refresh in main thread
   - Move these println's into a real logging system.
   - Fix up hyper and iron dependencies with real versions.
   - Remove earthen-ring-grabber.rs when the main

@@ -113,7 +113,8 @@ impl BattleNetApiClient {
             // s = String::from_utf8_lossy(s.as_bytes()).into_owned();
             // But even then, we're getting json errors. Until we solve that, use
             // rustc_serialize.
-            s = String::from_utf8_lossy(s.as_bytes()).into_owned();
+            let mut temp = String::from_utf8_lossy(s.as_bytes()).into_owned();
+            s = temp.drain(..).filter(|c| c.len_utf8() == 1).collect();
             match json::decode(&s) {
                 Ok(obj) => return obj,
                 Err(e) => {
