@@ -68,7 +68,7 @@ struct PriceRow {
 const NUM_AUCTION_DATA_THREADS: u32 = 5;
 
 /// Number of seconds to wait between fetching new auction results.
-const RESULT_FETCH_PERIOD: u64 = 60 * 30;
+const RESULT_FETCH_PERIOD: u64 = 60 * 5;
 
 /// Given a vec of auction listings for a realm and a map of the items we care about,
 /// returns a vec of (item_id, value) sorted by decreasing value, where value is
