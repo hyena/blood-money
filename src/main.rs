@@ -191,7 +191,7 @@ fn main() {
             }
         }, "realm-prices");
     }
-    let http_result = Iron::new(router).http("localhost:3000");
+    let http_result = Iron::new(router).http("0.0.0.0:80");
     println!("Ready for web traffic.");
 
     // Now that the webserver is up, periodically fetch
