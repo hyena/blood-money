@@ -183,7 +183,9 @@ fn main() {
                     context.add("update_age", &-1);
                 } else {
                     context.add("update_age",
-                        &(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - realm_prices.last_update / 1000));
+                        &((SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - realm_prices.last_update / 1000)/60));
+                    context.add("expected_update",
+                        &((60 -(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - realm_prices.last_update / 1000)/60)));
                 }
                 Ok(Response::with((ContentType::html().0, status::Ok, tera.render("prices.html", context).unwrap())))
             } else {
