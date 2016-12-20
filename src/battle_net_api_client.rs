@@ -11,12 +11,12 @@ use std::io::Read;
 use std::time::Duration;
 
 use hyper::client::{Client, Response};
-use rustc_serialize::{Decodable, json};
+use regex::bytes::Regex;
 use serde::de::Deserialize;
 use thread_throttler::ThreadThrottler;
 
 /// The content we care about in the realm status response.
-#[derive(Debug, Serialize, Deserialize, RustcDecodable)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct RealmInfo {
     pub name: String,
     pub slug: String,
@@ -24,7 +24,7 @@ pub struct RealmInfo {
 }
 
 /// Content we care about in an item info response.
-#[derive(Debug, Deserialize, RustcDecodable)]
+#[derive(Debug, Deserialize)]
 pub struct ItemInfo {
     pub id: u64,
     pub name: String,
@@ -32,54 +32,68 @@ pub struct ItemInfo {
 }
 
 /// Represents the reply from blizzard's auction data urls.
-#[derive(Debug, Deserialize, RustcDecodable)]
+#[derive(Debug, Deserialize)]
 struct AuctionListingsReply {
     realms: Vec<BTreeMap<String, String>>,  // Can't re-use RealmInfo because no connected_realms.
     auctions: Vec<AuctionListing>,
 }
 
 /// Represents the JSON reply from the auction data status endpoint.
-#[derive(Debug, Deserialize, RustcDecodable)]
+#[derive(Debug, Deserialize)]
 #[allow(non_snake_case)]
 struct AuctionDataPointer {
     url: String,
     lastModified: u64,
 }
 
-#[derive(Debug, Deserialize, RustcDecodable)]
+#[derive(Debug, Deserialize)]
 struct AuctionDataReply {
     files: Vec<AuctionDataPointer>, // Will always be 1 element.
 }
 
 /// The fields we care about in blizzard's auction reply.
-#[derive(Debug, Deserialize, RustcDecodable)]
+#[derive(Debug, Deserialize)]
 pub struct AuctionListing {
     pub item: u64,
     pub buyout: u64,
     pub quantity: u64,
 }
 
-pub struct BattleNetApiClient {
+#[derive(Clone, Copy, PartialEq)]
+pub enum Region {
+    US,
+    EU,
+}
+
+pub struct BattleNetApiClient<'a> {
     pub token: String,
     client: Client,
     tt: ThreadThrottler,
+    api_host: &'a str,
+    api_locale: &'a str,
 }
 
-impl BattleNetApiClient {
-    pub fn new(token: &str) -> BattleNetApiClient {
+impl<'a> BattleNetApiClient<'a> {
+    pub fn new(token: &str, region: Region) -> BattleNetApiClient {
         BattleNetApiClient {
             token: token.to_owned(),
             client: Client::new(),
             tt: ThreadThrottler::new(100, Duration::new(1, 0)),
+            api_host: match region {
+                Region::US => "us.api.battle.net",
+                Region::EU => "eu.api.battle.net",
+            },
+            api_locale: match region {
+                Region::US => "en_US",
+                Region::EU => "en_GB",
+            },
         }
     }
 
     /// Try to retrieve something from the Blizzard API. Will retry indefinitely.
     /// Returns the body as a String.
-    /// `task` will be used for error messages.
-    /// TODO: Add an option to strip non-ascii entirely? i.e. If `zealous_clean` is true,
-    /// then extra effort will be made to strip non-ascii characters from the json before decoding it.
-    fn make_blizzard_api_call<T: Decodable>(&self, url: &str, task: &str) -> T {
+    /// `task` will be used to generate error messages.
+    fn make_blizzard_api_call(&self, url: &str, task: &str) -> String {
         let mut s = String::new();
         let mut retries = 0;
 
@@ -108,44 +122,55 @@ impl BattleNetApiClient {
                     continue;
                 },
             }
-            // TODO: Fix this file to use serde instead.
-            //Sometimes the auction listings contain invalid unicode. Strip that:
-            // s = String::from_utf8_lossy(s.as_bytes()).into_owned();
-            // But even then, we're getting json errors. Until we solve that, use
-            // rustc_serialize.
-            let mut temp = String::from_utf8_lossy(s.as_bytes()).into_owned();
-            s = temp.drain(..).filter(|c| c.len_utf8() == 1).collect();
-            match json::decode(&s) {
-                Ok(obj) => return obj,
-                Err(e) => {
-                    println!("Failed to decode json for {}: {}. Retry {}.", task, e, retries);
-                },
-            }
+            return s;
         }
     }
 
     /// Downloads a list of realms from the Blizzard API.
+    /// Panics if the json response is malformed.
     pub fn get_realms(&self) -> Vec<RealmInfo> {
-        let mut realm_data: BTreeMap<String, Vec<RealmInfo>> =
-            self.make_blizzard_api_call(&format!("https://eu.api.battle.net/wow/realm/status?locale=en_GB&apikey={}", self.token), "realm status");
+        let mut realm_data: BTreeMap<String, Vec<RealmInfo>> = serde_json::from_str(&self.make_blizzard_api_call(
+            &format!("https://{}/wow/realm/status?locale={}&apikey={}", self.api_host, self.api_locale, self.token), "realm status")
+        ).unwrap();
         realm_data.remove("realms").expect("Malformed realm response.")
     }
 
     /// Downloads the auction listings for the specified realm, or None if the listings haven't
-    /// been updated since `cutoff`.
+    /// been updated since `cutoff` or if the json response is illformed.
     pub fn get_auction_listings(&self, realm_slug: &str, cutoff: u64) -> Option<(u64, Vec<AuctionListing>)> {
-        let mut auction_data_reply: AuctionDataReply =
-            self.make_blizzard_api_call(
-                &format!("https://eu.api.battle.net/wow/auction/data/{}?locale=en_GB&apikey={}", realm_slug, self.token),
-                &format!("auction data for {}", realm_slug)
-            );
+        let mut auction_data_reply: AuctionDataReply;
+        match serde_json::from_str(&self.make_blizzard_api_call(
+            &format!("https://{}/wow/auction/data/{}?locale={}&apikey={}", self.api_host, realm_slug, self.api_locale, self.token),
+            &format!("auction data for {}", realm_slug)))
+        {
+            Ok(reply) => auction_data_reply = reply,
+            Err(e) => {
+                println!("Bad json in auction pointer reply for {}: {}", realm_slug, e);
+                return None;
+            },
+        }
         let auction_data_pointer = auction_data_reply.files.pop().unwrap();
         if auction_data_pointer.lastModified <= cutoff {
-            return None
+            return None;
         }
-        let auction_listings_data: AuctionListingsReply =
-            self.make_blizzard_api_call(&auction_data_pointer.url, &format!("auction listings for {}", realm_slug));
-        Some((auction_data_pointer.lastModified, auction_listings_data.auctions))
+
+        let mut auction_data_str = self.make_blizzard_api_call(&auction_data_pointer.url, &format!("auction listings for {}", realm_slug));
+        // Auction data strings are especially problematic and often contain numerous invalid bytes in the "owner" and
+        // "ownerRealm" fields. Unfortunately, String::from_utf8_lossy() doesn't appear sufficient to deal with this
+        // so we use the heavy handed approach of a regex to rewrite these fields.
+        // TODO: Make this a lazy_static!.
+        let sanitize_re = Regex::new("\"owner\":\".*?\",\"ownerRealm\":\".*?\",\"bid").unwrap();
+        auction_data_str = String::from_utf8(
+            sanitize_re.replace_all(auction_data_str.as_bytes(),
+                                    &b"\"owner\":\"_\",\"ownerRealm\":\"_\",\"bid"[..])
+            ).unwrap();
+        match serde_json::from_str::<AuctionListingsReply>(&auction_data_str) {
+            Ok(auction_listings_data) => Some((auction_data_pointer.lastModified, auction_listings_data.auctions)),
+            Err(e) => {
+                println!("Error decoding json auction listings for {}: {}", realm_slug, e);
+                None
+            },
+        }
     }
 
     /// Helpler function to process a vec of RealmInfo's into vec's of slugs for
@@ -162,7 +187,10 @@ impl BattleNetApiClient {
         return realm_sets;
     }
 
+    /// Get info on an item. Panics on a malformed json response.
     pub fn get_item_info(&self, id: u64) -> ItemInfo {
-        self.make_blizzard_api_call::<ItemInfo>(&format!("https://eu.api.battle.net/wow/item/{}?locale=en_GB&apikey={}", id, self.token), "item info")
+        serde_json::from_str(&self.make_blizzard_api_call(
+            &format!("https://{}/wow/item/{}?locale={}&apikey={}", self.api_host, id, self.api_locale, self.token), "item info")
+        ).unwrap()
     }
 }

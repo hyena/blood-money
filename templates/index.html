@@ -15,14 +15,14 @@
     </style>
 {% endblock head %}
 {% block content %}
-<h1>Blood-Money EU-Realm List</h1>
+<h1>Blood-Money {% if is_eu %}EU-{% endif %}Realm List</h1>
 <p>Select your realm from the listings below to view current
   <a href="http://www.wowhead.com/npc=115264/illnea-bloodthorn">[blood of sargeras]</a> values.
 </p>
 <hr />
 <div class="realm-list">
   {% for realm in realms %}
-    <div class="realm"><a href="/blood-money-eu/{{realm.slug}}">{{realm.name}}</a></div>
+    <div class="realm"><a href="/blood-money{% if is_eu %}-eu{% endif %}/{{realm.slug}}">{{realm.name}}</a></div>
   {% endfor %}
 </div>
 {% endblock content %}

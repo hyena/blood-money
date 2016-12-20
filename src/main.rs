@@ -1,9 +1,9 @@
-#![feature(proc_macro)]
+#![feature(proc_macro, slice_patterns)]
 
 extern crate hyper;
 extern crate iron;
 extern crate router;
-extern crate rustc_serialize;
+extern crate regex;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -27,7 +27,7 @@ use tera::{Context, Tera};
 pub mod battle_net_api_client;
 pub mod thread_throttler;
 
-use battle_net_api_client::{AuctionListing, BattleNetApiClient};
+use battle_net_api_client::{AuctionListing, BattleNetApiClient, Region};
 
 /// Represents a single option available for sale from the blood vendor.
 #[derive(Debug, Deserialize)]
@@ -81,7 +81,7 @@ fn calculate_auction_values(listings: &Vec<AuctionListing>, items: &HashMap<u64,
         }
     }
     for quantities_and_buyouts in price_points.values_mut() {
-        quantities_and_buyouts.sort_by_key(|a| a.1);
+        quantities_and_buyouts.sort_by_key(|a| a.1);  // Sort by buyout price.
     }
     let total_item_quantities: BTreeMap<u64, u64> =
         price_points.iter().map(|(k, v)| {
@@ -107,15 +107,31 @@ fn calculate_auction_values(listings: &Vec<AuctionListing>, items: &HashMap<u64,
     item_values
 }
 
+/// Given a battle net Region, return the first path of the app's URL.
+fn app_url_for_region(region: &Region) -> &'static str {
+    match region {
+        &Region::US => "blood-money",
+        &Region::EU => "blood-money-eu",
+    }
+}
+
 fn main() {
     let token = match env::args().nth(1) {
         Some(token) => token,
         None => {
-            println!("Usage: bloodmoney <api token>");
+            println!("Usage: bloodmoney <api token> (us|eu)");
             return;
         }
     };
-    let client = Arc::new(BattleNetApiClient::new(&token));
+    let locale = match env::args().nth(2) {
+        Some(ref s) if s == "us" => Region::US,
+        Some(ref s) if s == "eu" => Region::EU,
+        _ => {
+            println!("Usage: bloodmoney <api token> (us|eu)");
+            return;
+        }
+    };
+    let client = Arc::new(BattleNetApiClient::new(&token, locale));
 
     // Process our item options and grab their icon names.
     let items: Vec<BloodVendorItem> = serde_json::from_str(include_str!("../catalog/items.json"))
@@ -139,9 +155,10 @@ fn main() {
     {
         let realms = realms.clone();
         let tera = tera.clone();
-        router.get("/blood-money-eu", move |_: &mut Request| {
+        router.get(format!("/{}", app_url_for_region(&locale)), move |_: &mut Request| {
             let mut context = Context::new();
             context.add("realms", &realms);
+            context.add("is_eu", &(locale == Region::EU));
             Ok(Response::with((ContentType::html().0, status::Ok, tera.render("index.html", context).unwrap())))
         }, "index");
     }
@@ -150,7 +167,7 @@ fn main() {
         let item_id_map = item_id_map.clone();
         let realms = realms.clone();
         let tera = tera.clone();
-        router.get("/blood-money-eu/:realm", move |req : &mut Request| {
+        router.get(format!("/{}/:realm", app_url_for_region(&locale)), move |req : &mut Request| {
             let realm = req.extensions.get::<Router>().unwrap().find("realm").unwrap();
             if let Some(realm_prices_lock) = price_map.get(realm) {
                 let mut context = Context::new();
@@ -185,13 +202,17 @@ fn main() {
                     context.add("update_age",
                         &(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - realm_prices.last_update / 1000));
                 }
+                context.add("is_eu", &(locale == Region::EU));
                 Ok(Response::with((ContentType::html().0, status::Ok, tera.render("prices.html", context).unwrap())))
             } else {
                 return Ok(Response::with(status::NotFound));
             }
         }, "realm-prices");
     }
-    let http_result = Iron::new(router).http("localhost:3001");
+    let http_result = Iron::new(router).http(format!("localhost:{}", match locale {
+        Region::US => 3000,
+        Region::EU => 3001,
+    }).as_str());
     println!("Ready for web traffic.");
 
     // Now that the webserver is up, periodically fetch
