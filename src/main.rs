@@ -68,7 +68,7 @@ struct PriceRow {
 const NUM_AUCTION_DATA_THREADS: u32 = 5;
 
 /// Number of seconds to wait between fetching new auction results.
-const RESULT_FETCH_PERIOD: u64 = 60 * 30;
+const RESULT_FETCH_PERIOD: u64 = 60 * 5;
 
 /// Given a vec of auction listings for a realm and a map of the items we care about,
 /// returns a vec of (item_id, value) sorted by decreasing value, where value is
@@ -183,7 +183,9 @@ fn main() {
                     context.add("update_age", &-1);
                 } else {
                     context.add("update_age",
-                        &(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - realm_prices.last_update / 1000));
+                        &((SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - realm_prices.last_update / 1000)/60));
+                    context.add("expected_update",
+                        &((60 -(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - realm_prices.last_update / 1000)/60)));
                 }
                 Ok(Response::with((ContentType::html().0, status::Ok, tera.render("prices.html", context).unwrap())))
             } else {
@@ -191,7 +193,7 @@ fn main() {
             }
         }, "realm-prices");
     }
-    let http_result = Iron::new(router).http("localhost:3000");
+    let http_result = Iron::new(router).http("0.0.0.0:80");
     println!("Ready for web traffic.");
 
     // Now that the webserver is up, periodically fetch
