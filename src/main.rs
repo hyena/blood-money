@@ -4,7 +4,6 @@ extern crate hyper;
 extern crate iron;
 extern crate regex;
 extern crate router;
-extern crate regex;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
