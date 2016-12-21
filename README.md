@@ -6,7 +6,7 @@ Quickstart
   2. Make an account on https://dev.battle.net/ and generate an
      API key
   3. Run `blood-money <api key> (us|eu)`
-  4. Look at http://localhost:3000/blood-money or http://localhost:3000/blood-money-eu depending on
+  4. Look at http://localhost:3000/blood-money or http://localhost:3001/blood-money-eu depending on
      how blood-money was launched.
 
 Todo
