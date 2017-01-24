@@ -13,9 +13,6 @@ Todo
 ----
   - Read token from config (or stick with commandline?)
   - Move these println's into a real logging system.
-  - Fix up hyper and iron dependencies with real versions.
-  - Remove earthen-ring-grabber.rs when the main
-    implementation is complete.
   - Save data between runs and use it when bringing the service
     back up.
   - The threading model is presently fairly serial and could be
