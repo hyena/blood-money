@@ -75,9 +75,12 @@ pub struct BattleNetApiClient<'a> {
 
 impl<'a> BattleNetApiClient<'a> {
     pub fn new(token: &str, region: Region) -> BattleNetApiClient {
+        let mut hyper_client = Client::new();
+        hyper_client.set_read_timeout(Some(Duration::from_secs(300)));
+
         BattleNetApiClient {
             token: token.to_owned(),
-            client: Client::new(),
+            client: hyper_client,
             tt: ThreadThrottler::new(100, Duration::new(1, 0)),
             api_host: match region {
                 Region::US => "us.api.battle.net",
