@@ -192,7 +192,11 @@ fn main() {
                 let mut context = Context::new();
                 let realm_prices = realm_prices_lock.read().unwrap();
                 // Build up a list of entries.
-                let highest_value = realm_prices.auction_values.get(0).unwrap().value;
+                // Find the most valuable item that isn't a reagent.
+                // TODO: This calculation is getting a little awkward. Do it at template time instead?
+                let highest_value = realm_prices.auction_values.iter()
+                    .find(|&x| item_id_map.get(&x.id).unwrap().vendor_type != "reagent")
+                    .unwrap().value;
                 let mut price_rows: Vec<PriceRow> = realm_prices.auction_values.iter().map(|&ItemValue{id, value}| {
                     let item_info = item_id_map.get(&id).unwrap();
                     let gold = value / (10_000);
