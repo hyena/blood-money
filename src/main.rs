@@ -37,6 +37,15 @@ struct VendorItem {
     id: u64,
     vendor_type: String,  // TODO: This should really be an enum populated by a custom deserializer.
     subtext: Option<String>,
+    mats: Option<Vec<CraftingComponent>>,
+}
+
+/// Some items we can 'buy' are actually crafted or traded with NPCs. This represents
+/// an ingredient in the recipe.
+#[derive(Debug, Deserialize)]
+struct CraftingComponent {
+    id: u64,
+    quantity: u64,
 }
 
 /// Value of an item on a realm.
@@ -207,7 +216,7 @@ fn main() {
                 }).collect();
                 // NOTE: drain_filter() is a nightly only experimental API call that might break.
                 let blood_price_rows = price_rows.drain_filter(|x| x.vendor_type.eq("blood")).collect::<Vec<_>>();
-                let sargerite_price_rows = price_rows;
+                let sargerite_price_rows = price_rows.drain_filter(|x| x.vendor_type.eq("sargerite")).collect::<Vec<_>>();
                 context.add("realm_name", &realms.iter().find(|&realm_info| &realm_info.slug == realm).unwrap().name);
                 context.add("blood_price_rows", &blood_price_rows);
                 context.add("sargerite_price_rows", &sargerite_price_rows);

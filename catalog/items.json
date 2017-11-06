@@ -209,5 +209,22 @@
     "name": "Lightsphene",
     "quantity": 0.1,
     "vendor_type": "sargerite"
+  },
+  {
+    "id": 152296,
+    "name": "Primal Obliterum",
+    "quantity": 1,
+    "subtext": "Traded in Dalaran",
+    "mats": [{
+      "id": 124125,
+      "quantity": 1
+      }],
+    "vendor_type": "sargerite"
+  },
+  {
+    "id": 124125,
+    "name": "Obliterum",
+    "quantity": 1,
+    "vendor_type": "reagent"
   }
 ]
