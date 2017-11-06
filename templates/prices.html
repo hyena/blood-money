@@ -43,6 +43,10 @@
       margin-top: 8px;
       margin-bottom: 8px;
     }
+    .subtext {
+      font-size: 0.75em;
+      color: springgreen;
+    }
     </style>
 {% endblock head %}
 {% block content %}
@@ -60,6 +64,10 @@ Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
     <div class="vendor-item-cell">
       <img src="https://render-us.worldofwarcraft.com/icons/56/{{price_row.icon}}.jpg">
       {{price_row.name}} X {{price_row.quantity}}
+      {% if price_row.subtext %}
+      <br />
+      <span class="subtext">{{price_row.subtext}}</span>
+      {% endif %}
     </div>
     {% endfor %}
   </div>
@@ -68,6 +76,10 @@ Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
     <div class="item-value-cell">
       <div class="value-bar" style="width: {{price_row.value_ratio}}%;"></div>
       {{price_row.gold}}g{{price_row.silver}}s{{price_row.copper}}c
+      {% if price_row.subtext %}
+      <br />
+      <span class="subtext">&nbsp;</span>
+      {% endif %}
     </div>
     {% endfor %}
   </div>
