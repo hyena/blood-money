@@ -54,13 +54,12 @@
 {% if update_age == -1 %}
 <h2>Still waiting on results for this realm.</h2>
 {% else %}
-<h2>Best investment is currently {{price_rows.0.name}}</h2>
 Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
-{% endif %}
+<h2>Blood of Sargeras - Best investment is currently {{blood_price_rows.0.name}}</h2>
 <hr />
 <div class="price-table">
   <div class="item-column">
-    {% for price_row in price_rows %}
+    {% for price_row in blood_price_rows %}
     <div class="vendor-item-cell">
       <img src="https://render-us.worldofwarcraft.com/icons/56/{{price_row.icon}}.jpg">
       {{price_row.name}} X {{price_row.quantity}}
@@ -72,7 +71,7 @@ Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
     {% endfor %}
   </div>
   <div class="value-column">
-    {% for price_row in price_rows %}
+    {% for price_row in blood_price_rows %}
     <div class="item-value-cell">
       <div class="value-bar" style="width: {{price_row.value_ratio}}%;"></div>
       {{price_row.gold}}g{{price_row.silver}}s{{price_row.copper}}c
@@ -84,4 +83,34 @@ Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
     {% endfor %}
   </div>
 </div>
+
+<h2>Primal Saronite - Best investment is currently {{saronite_price_rows.0.name}}</h2>
+<hr />
+<div class="price-table">
+  <div class="item-column">
+    {% for price_row in saronite_price_rows %}
+    <div class="vendor-item-cell">
+      <img src="https://render-us.worldofwarcraft.com/icons/56/{{price_row.icon}}.jpg">
+      {{price_row.name}} X {{price_row.quantity}}
+      {% if price_row.subtext %}
+      <br />
+      <span class="subtext">{{price_row.subtext}}</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="value-column">
+    {% for price_row in saronite_price_rows %}
+    <div class="item-value-cell">
+      <div class="value-bar" style="width: {{price_row.value_ratio}}%;"></div>
+      {{price_row.gold}}g{{price_row.silver}}s{{price_row.copper}}c
+      {% if price_row.subtext %}
+      <br />
+      <span class="subtext">&nbsp;</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
 {% endblock content %}

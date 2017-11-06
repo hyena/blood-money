@@ -1,4 +1,4 @@
-#![feature(proc_macro, slice_patterns)]
+#![feature(drain_filter, proc_macro, slice_patterns)]
 
 extern crate hyper;
 extern crate iron;
@@ -60,6 +60,7 @@ struct PriceRow {
     quantity: f64,
     icon: String,
     subtext: String,
+    vendor_type: String,
     value_ratio: u64,
     gold: u64,
     silver: u64,
@@ -183,7 +184,7 @@ fn main() {
                 let realm_prices = realm_prices_lock.read().unwrap();
                 // Build up a list of entries.
                 let highest_value = realm_prices.auction_values.get(0).unwrap().value;
-                let price_rows: Vec<PriceRow> = realm_prices.auction_values.iter().map(|&ItemValue{id, value}| {
+                let mut price_rows: Vec<PriceRow> = realm_prices.auction_values.iter().map(|&ItemValue{id, value}| {
                     let item_info = item_id_map.get(&id).unwrap();
                     let gold = value / (10_000);
                     let silver = (value - gold * 10_000) / 100;
@@ -197,14 +198,19 @@ fn main() {
                         quantity: item_info.quantity,
                         icon: item_icons.get(&id).unwrap().clone(),
                         subtext: item_info.subtext.clone().unwrap_or(String::new()),
+                        vendor_type: item_info.vendor_type.clone(),
                         value_ratio: value_ratio,
                         gold: gold,
                         silver: silver,
                         copper: copper,
                     }
                 }).collect();
+                // NOTE: drain_filter() is a nightly only experimental API call that might break.
+                let blood_price_rows = price_rows.drain_filter(|x| x.vendor_type.eq("blood")).collect::<Vec<_>>();
+                let saronite_price_rows = price_rows;
                 context.add("realm_name", &realms.iter().find(|&realm_info| &realm_info.slug == realm).unwrap().name);
-                context.add("price_rows", &price_rows);
+                context.add("blood_price_rows", &blood_price_rows);
+                context.add("saronite_price_rows", &saronite_price_rows);
                 // TODO: Change this to something more human readable.
                 if realm_prices.last_update == 0 {
                     context.add("update_age", &-1);

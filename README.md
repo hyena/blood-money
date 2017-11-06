@@ -1,4 +1,4 @@
-A World of Warcraft webapp that helps players determine the best value for their bloods of sargeras on their realm.
+A World of Warcraft webapp that helps players determine the best value for their bloods of sargeras and primal saronite on their realm.
 
 Quickstart
 ----------
@@ -20,7 +20,7 @@ Todo
     buggy realm.
   - There's definitely some major CPU usage when the download
     is running. Possibly some dumb deserialization issue.
-  
+
 Things that we might get to if this became more serious:
   - Currently does not respect changes in realm lists.
     Requires a restart to handle those changes.
