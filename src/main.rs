@@ -106,7 +106,7 @@ fn calculate_auction_values(listings: &Vec<AuctionListing>, items: &HashMap<u64,
             id: item.id,
             value: match item.quantity {
                 // A bit of a hack to avoid propagating floating point madness through the codebase:
-                // Some items are 10 primal saronite for 1 gem. All the others are whole numbers. So
+                // Some items are 10 primal sargerite for 1 gem. All the others are whole numbers. So
                 // we special case the former case as integer division.
                 0.1 => fifth_percentile_price_points.get(&item.id).unwrap_or(&0u64) / 10,
                 _ => fifth_percentile_price_points.get(&item.id).unwrap_or(&0u64) * item.quantity as u64,
@@ -207,10 +207,10 @@ fn main() {
                 }).collect();
                 // NOTE: drain_filter() is a nightly only experimental API call that might break.
                 let blood_price_rows = price_rows.drain_filter(|x| x.vendor_type.eq("blood")).collect::<Vec<_>>();
-                let saronite_price_rows = price_rows;
+                let sargerite_price_rows = price_rows;
                 context.add("realm_name", &realms.iter().find(|&realm_info| &realm_info.slug == realm).unwrap().name);
                 context.add("blood_price_rows", &blood_price_rows);
-                context.add("saronite_price_rows", &saronite_price_rows);
+                context.add("sargerite_price_rows", &sargerite_price_rows);
                 // TODO: Change this to something more human readable.
                 if realm_prices.last_update == 0 {
                     context.add("update_age", &-1);

@@ -154,60 +154,60 @@
     "id": 151565,
     "name": "Astral Glory",
     "quantity": 10,
-    "vendor_type": "saronite"
+    "vendor_type": "sargerite"
   },
   {
     "id": 151564,
     "name": "Empyrium",
     "quantity": 10,
-    "vendor_type": "saronite"
+    "vendor_type": "sargerite"
   },
   {
     "id": 151566,
     "name": "Fiendish Leather",
     "quantity": 10,
-    "vendor_type": "saronite"
+    "vendor_type": "sargerite"
   },
   {
     "id": 151567,
     "name": "Lightweave Cloth",
     "quantity": 10,
-    "vendor_type": "saronite"
+    "vendor_type": "sargerite"
   },
   {
     "id": 151579,
     "name": "Labradorite",
     "quantity": 0.1,
-    "vendor_type": "saronite"
+    "vendor_type": "sargerite"
   },
   {
     "id": 151722,
     "name": "Florid Malachite",
     "quantity": 0.1,
-    "vendor_type": "saronite"
+    "vendor_type": "sargerite"
   },
   {
     "id": 151720,
     "name": "Chemirine",
     "quantity": 0.1,
-    "vendor_type": "saronite"
+    "vendor_type": "sargerite"
   },
   {
     "id": 151718,
     "name": "Argulite",
     "quantity": 0.1,
-    "vendor_type": "saronite"
+    "vendor_type": "sargerite"
   },
   {
     "id": 151721,
     "name": "Hesselian",
     "quantity": 0.1,
-    "vendor_type": "saronite"
+    "vendor_type": "sargerite"
   },
   {
     "id": 151719,
     "name": "Lightsphene",
     "quantity": 0.1,
-    "vendor_type": "saronite"
+    "vendor_type": "sargerite"
   }
 ]

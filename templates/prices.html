@@ -84,11 +84,11 @@ Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
   </div>
 </div>
 
-<h2>Primal Saronite - Best investment is currently {{saronite_price_rows.0.name}}</h2>
+<h2>Primal Sargerite - Best investment is currently {{sargerite_price_rows.0.name}}</h2>
 <hr />
 <div class="price-table">
   <div class="item-column">
-    {% for price_row in saronite_price_rows %}
+    {% for price_row in sargerite_price_rows %}
     <div class="vendor-item-cell">
       <img src="https://render-us.worldofwarcraft.com/icons/56/{{price_row.icon}}.jpg">
       {{price_row.name}} X {{price_row.quantity}}
@@ -100,7 +100,7 @@ Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
     {% endfor %}
   </div>
   <div class="value-column">
-    {% for price_row in saronite_price_rows %}
+    {% for price_row in sargerite_price_rows %}
     <div class="item-value-cell">
       <div class="value-bar" style="width: {{price_row.value_ratio}}%;"></div>
       {{price_row.gold}}g{{price_row.silver}}s{{price_row.copper}}c
