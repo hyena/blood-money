@@ -199,6 +199,25 @@ fn main() {
                     .unwrap().value;
                 let mut price_rows: Vec<PriceRow> = realm_prices.auction_values.iter().map(|&ItemValue{id, value}| {
                     let item_info = item_id_map.get(&id).unwrap();
+                    let value = match &item_info.mats {
+                        &Some(ref mats_list) => {
+                            // TODO: Sorting the prices into a Vec was conventient, but now it's getting
+                            // Awkward to do things like look up a price. Refactor because we're doing a O(N^2) iterator
+                            // insite an iterator here.
+
+                            // Sum up the prices. This will panic if a reagent is not in the items list.
+                            let mat_cost = mats_list.iter().map(
+                                |&ref x| x.quantity * realm_prices.auction_values.iter().find(
+                                    |&y| x.id == y.id
+                                ).unwrap().value).sum();
+                            if value >= mat_cost {
+                                value - mat_cost
+                            } else {
+                                0
+                            }
+                        },
+                        &None => value
+                    };
                     let gold = value / (10_000);
                     let silver = (value - gold * 10_000) / 100;
                     let copper = value - gold * 10_000 - silver * 100;

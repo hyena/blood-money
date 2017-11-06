@@ -19,7 +19,13 @@ Todo
     improved such that it was hurt less by stragglers or one
     buggy realm.
   - There's definitely some major CPU usage when the download
-    is running. Possibly some dumb deserialization issue.
+    is running. Possibly some dumb deserialization issue or
+    sorting.
+  - The prices for each realm are currently just sorted in
+    decreasing value, which used to be convenient but is now
+    getting awkward (e.g. for materials calculation). Replace
+    with a BTreeMap or something else that permits quick
+    look-ups and ordering.
 
 Things that we might get to if this became more serious:
   - Currently does not respect changes in realm lists.
