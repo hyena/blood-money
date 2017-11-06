@@ -1,127 +1,213 @@
 [
- {
-  "id": 124117,
-  "name": "Lean Shank",
-  "quantity": 10
- },
- {
-  "id": 124101,
-  "name": "Aethril",
-  "quantity": 10
- },
- {
-  "id": 124437,
-  "name": "Shal'dorei Silk",
-  "quantity": 10
- },
- {
-  "id": 124107,
-  "name": "Cursed Queen Fish",
-  "quantity": 10
- },
- {
-  "id": 124118,
-  "name": "Fatty Bearsteak",
-  "quantity": 10
- },
- {
-  "id": 124102,
-  "name": "Dreamleaf",
-  "quantity": 10
- },
- {
-  "id": 124113,
-  "name": "Stonehide Leather",
-  "quantity": 10
- },
- {
-  "id": 124108,
-  "name": "Mossgill Perch",
-  "quantity": 10
- },
- {
-  "id": 124119,
-  "name": "Big Gamy Ribs",
-  "quantity": 10
- },
- {
-  "id": 124103,
-  "name": "Foxflower",
-  "quantity": 10
- },
- {
-  "id": 124115,
-  "name": "Stormscale",
-  "quantity": 10
- },
- {
-  "id": 124109,
-  "name": "Highmountain Salmon",
-  "quantity": 10
- },
- {
-  "id": 124120,
-  "name": "Leyblood",
-  "quantity": 10
- },
- {
-  "id": 124104,
-  "name": "Fjarnskaggl",
-  "quantity": 10
- },
- {
-  "id": 124440,
-  "name": "Arkhana",
-  "quantity": 10
- },
- {
-  "id": 124110,
-  "name": "Stormray",
-  "quantity": 10
- },
- {
-  "id": 124121,
-  "name": "Wildfowl Egg",
-  "quantity": 10
- },
- {
-  "id": 124105,
-  "name": "Starlight Rose",
-  "quantity": 3
- },
- {
-  "id": 124441,
-  "name": "Leylight Shard",
-  "quantity": 3
- },
- {
-  "id": 124111,
-  "name": "Runescale Koi",
-  "quantity": 10
- },
- {
-  "id": 124439,
-  "name": "Unbroken Tooth",
-  "quantity": 20
- },
- {
-  "id": 123918,
-  "name": "Leystone Ore",
-  "quantity": 10
- },
- {
-   "id": 123919,
-   "name": "Felslate",
-   "quantity": 5
- },
- {
-  "id": 124112,
-  "name": "Black Barracuda",
-  "quantity": 10
- },
- {
-  "id": 142117,
-  "name": "Potion of Prolonged Power",
-  "quantity": 10
- }
+  {
+    "id": 124117,
+    "name": "Lean Shank",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124101,
+    "name": "Aethril",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124437,
+    "name": "Shal'dorei Silk",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124107,
+    "name": "Cursed Queen Fish",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124118,
+    "name": "Fatty Bearsteak",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124102,
+    "name": "Dreamleaf",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124113,
+    "name": "Stonehide Leather",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124108,
+    "name": "Mossgill Perch",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124119,
+    "name": "Big Gamy Ribs",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124103,
+    "name": "Foxflower",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124115,
+    "name": "Stormscale",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124109,
+    "name": "Highmountain Salmon",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124120,
+    "name": "Leyblood",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124104,
+    "name": "Fjarnskaggl",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124440,
+    "name": "Arkhana",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124110,
+    "name": "Stormray",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124121,
+    "name": "Wildfowl Egg",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124105,
+    "name": "Starlight Rose",
+    "quantity": 3,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124441,
+    "name": "Leylight Shard",
+    "quantity": 3,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124111,
+    "name": "Runescale Koi",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124439,
+    "name": "Unbroken Tooth",
+    "quantity": 20,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 123918,
+    "name": "Leystone Ore",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 123919,
+    "name": "Felslate",
+    "quantity": 5,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 124112,
+    "name": "Black Barracuda",
+    "quantity": 10,
+    "vendor_type": "blood"
+  },
+  {
+    "id": 142117,
+    "name": "Potion of Prolonged Power",
+    "quantity": 10,
+    "vendor_type": "blood",
+    "subtext": "Alchemy craftable"
+  },
+  {
+    "id": 151565,
+    "name": "Astral Glory",
+    "quantity": 10,
+    "vendor_type": "saronite"
+  },
+  {
+    "id": 151564,
+    "name": "Empyrium",
+    "quantity": 10,
+    "vendor_type": "saronite"
+  },
+  {
+    "id": 151566,
+    "name": "Fiendish Leather",
+    "quantity": 10,
+    "vendor_type": "saronite"
+  },
+  {
+    "id": 151567,
+    "name": "Lightweave Cloth",
+    "quantity": 10,
+    "vendor_type": "saronite"
+  },
+  {
+    "id": 151579,
+    "name": "Labradorite",
+    "quantity": 0.1,
+    "vendor_type": "saronite"
+  },
+  {
+    "id": 151722,
+    "name": "Florid Malachite",
+    "quantity": 0.1,
+    "vendor_type": "saronite"
+  },
+  {
+    "id": 151720,
+    "name": "Chemirine",
+    "quantity": 0.1,
+    "vendor_type": "saronite"
+  },
+  {
+    "id": 151718,
+    "name": "Argulite",
+    "quantity": 0.1,
+    "vendor_type": "saronite"
+  },
+  {
+    "id": 151721,
+    "name": "Hesselian",
+    "quantity": 0.1,
+    "vendor_type": "saronite"
+  },
+  {
+    "id": 151719,
+    "name": "Lightsphene",
+    "quantity": 0.1,
+    "vendor_type": "saronite"
+  }
 ]

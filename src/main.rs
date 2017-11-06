@@ -31,10 +31,12 @@ use battle_net_api_client::{AuctionListing, BattleNetApiClient, Region};
 
 /// Represents a single option available for sale from the blood vendor.
 #[derive(Debug, Deserialize)]
-struct BloodVendorItem {
+struct VendorItem {
     name: String,
-    quantity: u64,
+    quantity: f64,
     id: u64,
+    vendor_type: String,  // TODO: This should really be an enum populated by a custom deserializer.
+    subtext: Option<String>,
 }
 
 /// Value of an item on a realm.
@@ -55,7 +57,7 @@ struct CurrentRealmValues {
 #[derive(Debug, Serialize)]
 struct PriceRow {
     name: String,
-    quantity: u64,
+    quantity: f64,
     icon: String,
     value_ratio: u64,
     gold: u64,
@@ -72,7 +74,7 @@ const RESULT_FETCH_PERIOD: u64 = 60 * 30;
 /// Given a vec of auction listings for a realm and a map of the items we care about,
 /// returns a vec of (item_id, value) sorted by decreasing value, where value is
 /// based on the 5th percentile buyout price.
-fn calculate_auction_values(listings: &Vec<AuctionListing>, items: &HashMap<u64, BloodVendorItem>) -> Vec<ItemValue> {
+fn calculate_auction_values(listings: &Vec<AuctionListing>, items: &HashMap<u64, VendorItem>) -> Vec<ItemValue> {
     // Calculate 5th percentiles for the items we care about.
     let mut price_points: BTreeMap<u64, Vec<(u64, u64)>> = BTreeMap::new();
     for listing in listings {
@@ -100,7 +102,13 @@ fn calculate_auction_values(listings: &Vec<AuctionListing>, items: &HashMap<u64,
     let mut item_values: Vec<ItemValue> = items.values().map(|item|
         ItemValue {
             id: item.id,
-            value: fifth_percentile_price_points.get(&item.id).unwrap_or(&0u64) * item.quantity,
+            value: match item.quantity {
+                // A bit of a hack to avoid propagating floating point madness through the codebase:
+                // Some items are 10 primal saronite for 1 gem. All the others are whole numbers. So
+                // we special case the former case as integer division.
+                0.1 => fifth_percentile_price_points.get(&item.id).unwrap_or(&0u64) / 10,
+                _ => fifth_percentile_price_points.get(&item.id).unwrap_or(&0u64) * item.quantity as u64,
+            }
         }
     ).collect();
     item_values.sort_by_key(|item_value| !item_value.value);
@@ -134,9 +142,9 @@ fn main() {
     let client = Arc::new(BattleNetApiClient::new(&token, locale));
 
     // Process our item options and grab their icon names.
-    let items: Vec<BloodVendorItem> = serde_json::from_str(include_str!("../catalog/items.json"))
+    let items: Vec<VendorItem> = serde_json::from_str(include_str!("../catalog/items.json"))
         .expect("Error reading items.");
-    let item_id_map: Arc<HashMap<u64, BloodVendorItem>> = Arc::new(items.into_iter().map(|x| (x.id, x)).collect());
+    let item_id_map: Arc<HashMap<u64, VendorItem>> = Arc::new(items.into_iter().map(|x| (x.id, x)).collect());
     let item_icons: Arc<HashMap<u64, String>> = Arc::new(item_id_map.keys().map(|&id| (id, client.get_item_info(id).icon)).collect());
 
     // Get the list of realms and create an empty price map so we can render pages while
