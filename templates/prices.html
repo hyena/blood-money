@@ -73,7 +73,7 @@ Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
   <div class="value-column">
     {% for price_row in blood_price_rows %}
     <div class="item-value-cell">
-      <div class="value-bar" style="width: {{price_row.value_ratio}}%;"></div>
+      <div class="value-bar" style="width: {{price_row.value_ratio }}%;"></div>
       {{price_row.gold}}g{{price_row.silver}}s{{price_row.copper}}c
       {% if price_row.subtext %}
       <br />
@@ -102,7 +102,7 @@ Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
   <div class="value-column">
     {% for price_row in sargerite_price_rows %}
     <div class="item-value-cell">
-      <div class="value-bar" style="width: {{price_row.value_ratio}}%;"></div>
+      <div class="value-bar" style="width: {{price_row.value_ratio }}%;"></div>
       {{price_row.gold}}g{{price_row.silver}}s{{price_row.copper}}c
       {% if price_row.subtext %}
       <br />
