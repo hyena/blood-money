@@ -73,7 +73,7 @@ Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
       {% endif %}
       {% if price_row.mats | length > 0 %}
       <div class="material">
-          Mats:<br />
+          Crafting Mats:<br />
           {% for mat in price_rows.mats %}
           {{mat.name}}: {{mat.gold}}g{{mat.silver}}s{{mat.copper}}c<br />
           {% endfor %}
@@ -118,7 +118,7 @@ Last updated {{update_age}} minute{% if update_age > 0 %}s{% endif %} ago.
       {% endif %}
       {% if price_row.mats | length > 0 %}
       <div class="material">
-          Mats:<br />
+          Crafting Mats:<br />
           {% for mat in price_rows.mats %}
           {{mat.name}}: {{mat.gold}}g{{mat.silver}}s{{mat.copper}}c<br />
           {% endfor %}
