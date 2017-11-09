@@ -76,8 +76,16 @@ struct PriceRow {
     gold: u64,
     silver: u64,
     copper: u64,
+    mats: Vec<Material>,
 }
 
+#[derive(Debug, Serialize)]
+struct Material {
+    name: String,
+    gold: u64,
+    silver: u64,
+    copper: u64,
+}
 /// Number of threads to use when fetching auction house results.
 const NUM_AUCTION_DATA_THREADS: u32 = 5;
 
@@ -250,47 +258,24 @@ fn main() {
                             gold: gold,
                             silver: silver,
                             copper: copper,
+                            mats: match item_info.mats {
+                                Some(ref mats_list) => mats_list.iter().map(|ref x| {
+                                    let value = realm_prices.value_map.get(&x.id).unwrap() * x.quantity;
+                                    let gold = value / (10_000);
+                                    let silver = (value - gold * 10_000) / 100;
+                                    let copper = value - gold * 10_000 - silver * 100;
+                                    Material {
+                                        name: item_id_map.get(&x.id).unwrap().name.clone(),
+                                        gold: gold,
+                                        silver: silver,
+                                        copper: copper,
+                                    }
+                                }).collect(),
+                                None => Vec::new(),
+                            },
                         }
                     }).collect()
                 };
-                // let highest_value = realm_prices.auction_values.iter()
-                //     .find(|&x| item_id_map.get(&x.id).unwrap().vendor_type != "reagent")
-                //     .unwrap().value;
-                // let mut price_rows: Vec<PriceRow> = realm_prices.auction_values.iter().map(|&ItemValue{id, value}| {
-                //     let item_info = item_id_map.get(&id).unwrap();
-                //     let value = match &item_info.mats {
-                //         &Some(ref mats_list) => {
-                //             // Sum up the prices. This will panic if a reagent is not in the items list.
-                //             let mat_cost = mats_list.iter().map(
-                //                 |&ref x| x.quantity * realm_prices.value_map.get(&x.id).unwrap()
-                //             ).sum();
-                //             if value >= mat_cost {
-                //                 value - mat_cost
-                //             } else {
-                //                 0
-                //             }
-                //         },
-                //         &None => value
-                //     };
-                //     let gold = value / (10_000);
-                //     let silver = (value - gold * 10_000) / 100;
-                //     let copper = value - gold * 10_000 - silver * 100;
-                //     let value_ratio = match highest_value {
-                //         0u64 => 0u64,
-                //         _ => value*100/highest_value,  // Percentile!
-                //     };
-                //     PriceRow {
-                //         name: item_info.name.clone(),
-                //         quantity: item_info.quantity,
-                //         icon: item_icons.get(&id).unwrap().clone(),
-                //         subtext: item_info.subtext.clone().unwrap_or(String::new()),
-                //         vendor_type: item_info.vendor_type.clone(),
-                //         value_ratio: value,
-                //         gold: gold,
-                //         silver: silver,
-                //         copper: copper,
-                //     }
-                // }).collect();
                 let blood_price_rows = make_price_rows(&realm_prices.blood_item_values);
                 let sargerite_price_rows = make_price_rows(&realm_prices.sargerite_item_values);
                 context.add("realm_name", &realms.iter().find(|&realm_info| &realm_info.slug == realm).unwrap().name);
