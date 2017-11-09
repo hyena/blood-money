@@ -21,15 +21,20 @@ Todo
   - There's definitely some major CPU usage when the download
     is running. Possibly some dumb deserialization issue or
     sorting.
-  - The prices for each realm are currently just sorted in
-    decreasing value, which used to be convenient but is now
-    getting awkward (e.g. for materials calculation). Replace
-    with a BTreeMap or something else that permits quick
-    look-ups and ordering.
+  - We should probably move most of the work to the background
+    thread and make the web thread just essentially take a reader
+    lock and clone some `Arc`'s
+  - Add some more crafting options now that we have the
+    infrastructure for that.
 
 Things that we might get to if this became more serious:
   - Currently does not respect changes in realm lists.
     Requires a restart to handle those changes.
+  - Re-implement the `battle_net_api_client` into something
+    robust: Use a modern version of hyper (means working with
+    futures), flesh out all the method calls, move it into a
+    lib.
+  - Re-implement on rocket.rs instead of iron.
 
 License
 -------
